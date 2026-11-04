@@ -1,119 +1,293 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { Vibration } from 'react-native';
 
-type Operation = "+" | "-";
+export const useCalculator = () => {
+  const [formula, setFormula] = useState<string | null>(null);
+  const [number, setNumber] = useState('0');
+  const [prevNumber, setPrevNumber] = useState('0');
+  const [lastExpression, setLastExpression] = useState('');
 
-interface Calculator {
-  display: string;
-  appendNumber: (num: string) => void;
-  chooseOperation: (op: Operation) => void;
-  clear: () => void;
-  backspace: () => void;
-  toggleSign: () => void;
-  calculateResult: () => void;
-}
+  const triggerVibration = () => {
+    Vibration.vibrate(35);
+  };
 
-const NUMBER_PATTERN = "(?:\\d+(?:\\.\\d*)?|\\.\\d+)";
-const EXPRESSION_PATTERN = new RegExp(
-  `^-?${NUMBER_PATTERN}(?:[+-]-?${NUMBER_PATTERN})*$`,
-);
+  const normalizeExpression = (value: string) =>
+    value.replace(/x/gi, '*').replace(/÷/gi, '/').replace(/−/gi, '-').replace(/\s+/g, '');
 
-export default function useCalculator(): Calculator {
-  const [display, setDisplay] = useState("0");
+  const evaluateExpression = (expression: string): string | null => {
+    const safeExpression = normalizeExpression(expression);
 
-  const appendNumber = (num: string) => {
-    if (!/^\d$|^\.$/.test(num)) return;
+    if (!/^[0-9+\-*/().]+$/.test(safeExpression)) return null;
 
-    setDisplay((currentDisplay: string): string => {
-      const currentNumber = currentDisplay.match(/-?\d*\.?\d*$/)?.[0] ?? "";
+    try {
+      const result = Function(`"use strict"; return (${safeExpression});`)();
+      if (!Number.isFinite(result)) return 'Error';
+      return String(result);
+    } catch {
+      return null;
+    }
+  };
 
-      if (num === ".") {
-        if (currentNumber.includes(".")) return currentDisplay;
-        if (currentNumber === "" || currentNumber === "-") {
-          return `${currentDisplay}0.`;
+  const clean = () => {
+    triggerVibration();
+    setNumber('0');
+    setPrevNumber('0');
+    setFormula(null);
+    setLastExpression('');
+  };
+
+  const deleteLastNumber = () => {
+    triggerVibration();
+
+    if (number.length <= 1) {
+      setNumber('0');
+      return;
+    }
+
+    setNumber(number.slice(0, -1));
+  };
+
+  const buildNumber = (textNumber: string) => {
+    triggerVibration();
+
+    if (formula === null && lastExpression && number !== '0') {
+      setLastExpression('');
+    }
+
+    if (textNumber === '(' || textNumber === ')') {
+      if (textNumber === '(') {
+        if (number === '0') {
+          setNumber('(');
+        } else if (/[0-9)]$/.test(number)) {
+          setNumber(`${number}*(`);
+        } else {
+          setNumber(`${number}(`);
         }
-        return `${currentDisplay}.`;
+        return;
       }
 
-      if (currentNumber === "0" || currentNumber === "-0") {
-        return `${currentDisplay.slice(0, -currentNumber.length)}${
-          currentNumber.startsWith("-") ? `-${num}` : num
-        }`;
+      const openParentheses = (number.match(/\(/g) ?? []).length;
+      const closeParentheses = (number.match(/\)/g) ?? []).length;
+
+      if (openParentheses <= closeParentheses || /[+\-*/(]$/.test(number)) {
+        return;
       }
 
-      return `${currentDisplay}${num}`;
-    });
-  };
+      setNumber(`${number})`);
+      return;
+    }
 
-  const chooseOperation = (op: Operation) => {
-    setDisplay((currentDisplay: string): string => {
-      if (/[+-]$/.test(currentDisplay)) {
-        return `${currentDisplay.slice(0, -1)}${op}`;
-      }
-      return `${currentDisplay}${op}`;
-    });
-  };
+    if (number.includes('.') && textNumber === '.') return;
 
-  const clear = () => setDisplay("0");
+    if (number === '0' && textNumber !== '.') {
+      setNumber(textNumber);
+      return;
+    }
 
-  const backspace = (): void => {
-    setDisplay((currentDisplay: string): string => {
-      const nextDisplay = currentDisplay.slice(0, -1);
-      return nextDisplay === "" || nextDisplay === "-" ? "0" : nextDisplay;
-    });
+    if (number === '0' && textNumber === '.') {
+      setNumber('0.');
+      return;
+    }
+
+    setNumber(number + textNumber);
   };
 
   const toggleSign = () => {
-    setDisplay((currentDisplay: string): string => {
-      if (/[+-]$/.test(currentDisplay)) {
-        if (/[+-]-$/.test(currentDisplay)) {
-          return currentDisplay.slice(0, -1);
-        }
-        return `${currentDisplay}-`;
-      }
+    triggerVibration();
 
-      const currentNumber = currentDisplay.match(/-?(?:\d+(?:\.\d*)?|\.\d+)$/)?.[0];
-      if (!currentNumber) return currentDisplay;
+    if (number === '0') return;
 
-      const numberStart = currentDisplay.length - currentNumber.length;
-      const toggledNumber = currentNumber.startsWith("-")
-        ? currentNumber.slice(1)
-        : `-${currentNumber}`;
+    if (number.startsWith('-')) {
+      setNumber(number.slice(1));
+      return;
+    }
 
-      return `${currentDisplay.slice(0, numberStart)}${toggledNumber}`;
-    });
+    setNumber(`-${number}`);
+  };
+
+  const setLastNumber = () => {
+    const toSave = number.endsWith('.') ? number.slice(0, -1) : number;
+    setPrevNumber(toSave || '0');
+    setNumber('0');
+  };
+
+  const applyOperator = (nextOperator: string) => {
+    triggerVibration();
+
+    if (formula && number !== '0') {
+      const chainedExpression = `${prevNumber}${formula}${number}`;
+      setPrevNumber(chainedExpression);
+      setFormula(nextOperator);
+      setNumber('0');
+      return;
+    }
+
+    if (formula && number === '0') {
+      setFormula(nextOperator);
+      return;
+    }
+
+    if (!formula && lastExpression) {
+      setPrevNumber(number || '0');
+      setFormula(nextOperator);
+      setNumber('0');
+      setLastExpression('');
+      return;
+    }
+
+    setPrevNumber(number || '0');
+    setFormula(nextOperator);
+    setNumber('0');
+  };
+
+  const divideOperation = () => {
+    applyOperator('/');
+  };
+
+  const multiplyOperation = () => {
+    applyOperator('x');
+  };
+
+  const subtractOperation = () => {
+    applyOperator('-');
+  };
+
+  const addOperation = () => {
+    applyOperator('+');
   };
 
   const calculateResult = () => {
-    setDisplay((currentDisplay: string): string => {
-      if (!EXPRESSION_PATTERN.test(currentDisplay)) return currentDisplay;
+    triggerVibration();
 
-      const firstNumber = currentDisplay.match(new RegExp(`^-?${NUMBER_PATTERN}`))?.[0];
-      if (!firstNumber) return currentDisplay;
+    if (!formula) {
+      return;
+    }
 
-      let result = Number(firstNumber);
-      const remainingExpression = currentDisplay.slice(firstNumber.length);
-      const operations = remainingExpression.matchAll(
-        new RegExp(`([+-])(-?${NUMBER_PATTERN})`, "g"),
-      );
+    const expression = `${prevNumber}${formula}${number}`;
+    const result = evaluateExpression(expression);
 
-      for (const [, operator, operand] of operations) {
-        const value = Number(operand);
-        result = operator === "+" ? result + value : result - value;
-      }
+    if (!result) return;
 
-      if (!Number.isFinite(result)) return currentDisplay;
-      const formattedResult = Number(result.toPrecision(12));
-      return String(Object.is(formattedResult, -0) ? 0 : formattedResult);
-    });
+    setLastExpression(expression);
+    setNumber(result);
+    setPrevNumber('0');
+    setFormula(null);
+  };
+
+  const formatResult = (value: number) => {
+    if (!Number.isFinite(value)) {
+      return 'Error';
+    }
+
+    if (Number.isInteger(value)) {
+      return String(value);
+    }
+
+    return String(value.toFixed(10)).replace(/\.0+$|(?<=\.[0-9]*?)0+$/g, '').replace(/\.$/, '');
+  };
+
+  const applyScientificFunction = (kind: string) => {
+    triggerVibration();
+
+    const currentValue = Number(number === '0' ? prevNumber : number);
+
+    if (!Number.isFinite(currentValue)) {
+      setNumber('Error');
+      return;
+    }
+
+    let result: number | null = null;
+    let expressionLabel = '';
+
+    switch (kind) {
+      case 'sqrt':
+        if (currentValue < 0) {
+          setNumber('Error');
+          return;
+        }
+        result = Math.sqrt(currentValue);
+        expressionLabel = `√(${number === '0' ? prevNumber : number})`;
+        break;
+      case 'square':
+        result = currentValue * currentValue;
+        expressionLabel = `(${number === '0' ? prevNumber : number})²`;
+        break;
+      case 'inverse':
+        if (currentValue === 0) {
+          setNumber('Error');
+          return;
+        }
+        result = 1 / currentValue;
+        expressionLabel = `1/(${number === '0' ? prevNumber : number})`;
+        break;
+      case 'percent':
+        result = currentValue / 100;
+        expressionLabel = `(${number === '0' ? prevNumber : number})%`;
+        break;
+      case 'sin':
+        result = Math.sin((currentValue * Math.PI) / 180);
+        expressionLabel = `sin(${number === '0' ? prevNumber : number})`;
+        break;
+      case 'cos':
+        result = Math.cos((currentValue * Math.PI) / 180);
+        expressionLabel = `cos(${number === '0' ? prevNumber : number})`;
+        break;
+      case 'tan':
+        result = Math.tan((currentValue * Math.PI) / 180);
+        expressionLabel = `tan(${number === '0' ? prevNumber : number})`;
+        break;
+      case 'log':
+        if (currentValue <= 0) {
+          setNumber('Error');
+          return;
+        }
+        result = Math.log10(currentValue);
+        expressionLabel = `log(${number === '0' ? prevNumber : number})`;
+        break;
+      case 'ln':
+        if (currentValue <= 0) {
+          setNumber('Error');
+          return;
+        }
+        result = Math.log(currentValue);
+        expressionLabel = `ln(${number === '0' ? prevNumber : number})`;
+        break;
+      case 'pi':
+        setNumber(String(Math.PI));
+        setLastExpression('π');
+        setPrevNumber('0');
+        setFormula(null);
+        return;
+      case 'e':
+        setNumber(String(Math.E));
+        setLastExpression('e');
+        setPrevNumber('0');
+        setFormula(null);
+        return;
+      default:
+        return;
+    }
+
+    setLastExpression(expressionLabel);
+    setNumber(formatResult(result));
+    setPrevNumber('0');
+    setFormula(null);
   };
 
   return {
-    display,
-    appendNumber,
-    chooseOperation,
-    clear,
-    backspace,
+    number,
+    prevNumber,
+    formula,
+    lastExpression,
+    clean,
+    deleteLastNumber,
+    buildNumber,
     toggleSign,
+    divideOperation,
+    multiplyOperation,
+    subtractOperation,
+    addOperation,
     calculateResult,
+    applyScientificFunction,
   };
-}
+};

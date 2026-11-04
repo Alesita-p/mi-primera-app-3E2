@@ -38,7 +38,7 @@ const Rejilla = () => {
 
       {/* Fila 5: 0 (doble), ., = */}
       <View style={styles.fila}>
-        <Boton texto="0" isDouble />
+        <Boton texto="0" />
         <Boton texto="." />
         <Boton texto="=" color="accent" />
       </View>
@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
   },
   fila: {
     flexDirection: "row",
-    justifyContent: "center",
-    gap: 16, 
+    justifyContent: "space-between",
+    gap: 12,
     marginBottom: 15,
     width: "100%",
   },

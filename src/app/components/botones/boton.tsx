@@ -19,9 +19,9 @@ const Boton = ({ texto, color = "medium", isDouble, onPress }: BotonProps) => {
       onPress={onPress}
       style={[
         styles.boton,
-        { 
-          backgroundColor, 
-          width: isDouble ? 152 : 64, // Correcto para el botón doble (ej. el cero)
+        {
+          backgroundColor,
+          width: isDouble ? 72 * 2 : 72,
         },
       ]}
     >
@@ -37,11 +37,13 @@ export default Boton;
 const styles = StyleSheet.create({
   boton: {
     borderRadius: 100,
-    height: 64,
+    height: 72,
     justifyContent: "center",
     alignItems: "center",
-    margin: 6, 
-  },          
+    margin: 6,
+    flex: 1,
+    maxWidth: 72,
+  },
   text: {
     fontSize: 24,
     color: "#263A59",
