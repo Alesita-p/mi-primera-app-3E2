@@ -1,64 +1,65 @@
-import Boton from "@/app/components/botones/boton";
-import { StyleSheet, View } from "react-native";
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import Boton from './boton';
 
-const Rejilla = () => {
+interface RejillaProps {
+  onPressKey: (key: string, type: string) => void;
+}
+
+export default function Rejilla({ onPressKey }: RejillaProps) {
   return (
-    <View style={styles.container}>
-      {/* Fila 1: AC, +/-, %, ÷ */}
-      <View style={styles.fila}>
-        <Boton texto="AC" color="light" />
-        <Boton texto="+/-" color="light" />
-        <Boton texto="%" color="light" />
-        <Boton texto="÷" color="accent" />
+    <View style={styles.gridContainer}>
+      {/* Fila 1 */}
+      <View style={styles.row}>
+        <Boton emoji="🧹" label="AC" type="action" onPress={() => onPressKey('AC', 'action')} />
+        <Boton emoji="±" label="+/-" type="action"  onPress={() => onPressKey('±', 'action')} />
+        <Boton emoji="%" label="%" type="action"  onPress={() => onPressKey('%', 'action')} />
+        <Boton emoji="☄️" label="÷" type="operator" onPress={() => onPressKey('/', 'operator')} />
       </View>
 
-      {/* Fila 2: 7, 8, 9, × */}
-      <View style={styles.fila}>
-        <Boton texto="7" />
-        <Boton texto="8" />
-        <Boton texto="9" />
-        <Boton texto="×" color="accent" />
+      {/* Fila 2 */}
+      <View style={styles.row}>
+        <Boton emoji="🛰️" label="7" onPress={() => onPressKey('7', 'number')} />
+        <Boton emoji="🌌" label="8" onPress={() => onPressKey('8', 'number')} />
+        <Boton emoji="🔭" label="9" onPress={() => onPressKey('9', 'number')} />
+        <Boton emoji="☀️" label="×" type="operator" onPress={() => onPressKey('*', 'operator')} />
       </View>
 
-      {/* Fila 3: 4, 5, 6, - */}
-      <View style={styles.fila}>
-        <Boton texto="4" />
-        <Boton texto="5" />
-        <Boton texto="6" />
-        <Boton texto="-" color="accent" />
+      {/* Fila 3 */}
+      <View style={styles.row}>
+        <Boton emoji="🌠" label="4" onPress={() => onPressKey('4', 'number')} />
+        <Boton emoji="🌍" label="5" onPress={() => onPressKey('5', 'number')} />
+        <Boton emoji="☄️" label="6" onPress={() => onPressKey('6', 'number')} />
+        <Boton emoji="🌑" label="-" type="operator" onPress={() => onPressKey('-', 'operator')} />
       </View>
 
-      {/* Fila 4: 1, 2, 3, + */}
-      <View style={styles.fila}>
-        <Boton texto="1" />
-        <Boton texto="2" />
-        <Boton texto="3" />
-        <Boton texto="+" color="accent" />
+      {/* Fila 4 */}
+      <View style={styles.row}>
+        <Boton emoji="🚀" label="1" onPress={() => onPressKey('1', 'number')} />
+        <Boton emoji="🛸" label="2" onPress={() => onPressKey('2', 'number')} />
+        <Boton emoji="👽" label="3" onPress={() => onPressKey('3', 'number')} />
+        <Boton emoji="⭐" label="+" type="operator" onPress={() => onPressKey('+', 'operator')} />
       </View>
 
-      {/* Fila 5: 0 (doble), ., = */}
-      <View style={styles.fila}>
-        <Boton texto="0" />
-        <Boton texto="." />
-        <Boton texto="=" color="accent" />
+      {/* Fila 5 */}
+      <View style={styles.row}>
+        <Boton emoji="🪐" label="0" isWide={true} onPress={() => onPressKey('0', 'number')} />
+        <Boton emoji="✨" label="." onPress={() => onPressKey('.', 'number')} />
+        <Boton emoji="🚀" label="=" type="equal" onPress={() => onPressKey('=', 'equal')} />
       </View>
     </View>
   );
-};
-
-export default Rejilla;
+}
 
 const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    paddingHorizontal: 20,
-    alignItems: "center",
+  gridContainer: {
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  fila: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 15,
-    width: "100%",
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
 });

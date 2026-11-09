@@ -1,50 +1,45 @@
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
-const Display = () => {
+interface DisplayProps {
+  expression: string; // Secuencia de emojis o símbolos actuales
+  value: string;      // Valor numérico real (resultado o número en curso)
+}
+
+export default function Display({ expression, value }: DisplayProps) {
   return (
-    <View style={styles.display}>
-      {/* Arriba de la línea: La operación que da 0 (ej. suma de prueba) */}
-      <Text style={styles.subResult} numberOfLines={1} adjustsFontSizeToFit>
-        5 - 5 =
+    <View style={styles.displayContainer}>
+      {/* Secuencia visual de emojis espaciales */}
+      <Text style={styles.expressionText} numberOfLines={1} adjustsFontSizeToFit>
+        {expression || '🪐 🚀 🛸'}
       </Text>
-      
-      {/* Línea divisoria sutil */}
-      <View style={styles.lineaDivisoria} />
-
-      {/* Abajo: El total principal que es 0 en grande */}
-      <Text style={styles.result} numberOfLines={1} adjustsFontSizeToFit>
-        0
+      {/* Pantalla principal con el número exacto */}
+      <Text style={styles.valueText} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
       </Text>
     </View>
   );
-};
-
-export default Display;
+}
 
 const styles = StyleSheet.create({
-  display: {
-    width: "100%",
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    justifyContent: "flex-end", 
-    height: 130, 
+  displayContainer: {
+    backgroundColor: '#0b0b1a', // Fondo espacial oscuro
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    minHeight: 140,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  subResult: {
-    color: "#94a3b8", 
-    fontSize: 24,
-    textAlign: "right",
-    marginBottom: 6,
+  expressionText: {
+    color: '#8b8bc3',
+    fontSize: 22,
+    marginBottom: 8,
   },
-  lineaDivisoria: {
-    height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)", 
-    width: "100%",
-    marginBottom: 6,
-  },
-  result: {
-    color: "#dfe4ec",
-    fontSize: 64,
-    textAlign: "right",
-    fontWeight: "bold",
+  valueText: {
+    color: '#ffffff',
+    fontSize: 56,
+    fontWeight: '300',
   },
 });
